@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Iutils -Wall -Wextra
+CFLAGS = -Iinclude -Wall -Wextra
 LIBS = -lwiringPi -lm
 TARGET = main
 SRC = src/encoder_helper.c src/radio_helper.c src/cJSON.c src/lcd_helper.c src/st7735s.c src/font.c src/main.c

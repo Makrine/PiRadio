@@ -85,12 +85,12 @@ void play_station(const char *url) {
 }
 
 void stop_station() {
-    // if(vlc_pid > 0) {
-    //     kill(vlc_pid, SIGKILL);
-    //     vlc_pid = -1;
-    // }
-    // else {
-    //     execlp("pkill", "-9", "vlc");
-    // }
-    execlp("pkill", "pkill", "-9", "vlc", NULL);
+    if(vlc_pid > 0) {
+        kill(vlc_pid, SIGKILL);
+        vlc_pid = -1;
+    }
+    else {
+        execlp("pkill", "-9", "vlc", NULL);
+    }
+    
 }

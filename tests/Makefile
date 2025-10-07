@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Iutils -Wall -Wextra
+CFLAGS = -Iinclude -Wall -Wextra
 LIBS = -lwiringPi -lm
 
 TARGET = test

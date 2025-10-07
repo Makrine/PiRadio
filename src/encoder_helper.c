@@ -31,33 +31,6 @@ void encoder_delay(int ms) {
     delay(ms);
 }
 
-// encoder_value_t read_val() {
-//     encoder_value_t encoder_value = {0, 0};
-//     static int last_clk = HIGH;
-//     static int last_sw = HIGH;
-
-//     int clk = digitalRead(PIN_CLK);
-//     int dt = digitalRead(PIN_DT);
-//     int sw = digitalRead(PIN_SW);
-
-//     if(sw != last_sw) {
-//         encoder_value.btn = !sw;
-//         last_sw = sw;
-//     }
-
-//     if (clk != last_clk) {
-//         if (clk == LOW) {
-//             if (dt == LOW) {
-//                 encoder_value.rotation = -1; // Counter-clockwise
-//             } else {
-//                 encoder_value.rotation = 1;  // Clockwise
-//             }
-//         }
-//     }
-//     last_clk = clk;
-
-//     return encoder_value;
-// }
 
 encoder_value_t read_encoder() {
     encoder_value_t event = {0};
