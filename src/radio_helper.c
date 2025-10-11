@@ -84,7 +84,11 @@ void play_station(const char *url) {
     // parent continues
 }
 
-void stop_station() {
+void stop_station(int force) {
+    if(force) {
+        execlp("pkill", "-9", "vlc", NULL);
+        return;
+    }
     if(vlc_pid > 0) {
         kill(vlc_pid, SIGKILL);
         vlc_pid = -1;

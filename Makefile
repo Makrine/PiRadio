@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Iinclude -Wall -Wextra
-LIBS = -lwiringPi -lm
+LIBS = -lwiringPi -lm #-lpaho-mqtt3c
 TARGET = main
-SRC = src/encoder_helper.c src/radio_helper.c src/cJSON.c src/lcd_helper.c src/st7735s.c src/font.c src/main.c
+SRC = src/encoder_helper.c src/radio_helper.c src/cJSON.c src/lcd_helper.c src/st7735s.c src/font.c src/main.c #src/mqtt_client_helper.c
 
 all: $(TARGET)
 

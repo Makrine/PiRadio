@@ -1,0 +1,16 @@
+CC = gcc
+CFLAGS = -Wall -Wextra
+LIBS = -lpaho-mqtt3c
+TARGET = main
+SRC = src/mqtt_client_helper.c src/test.c
+
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LIBS)
+
+debug: CFLAGS += -g -O0
+debug: $(TARGET)
+
+clean:
+	rm -f $(TARGET)
