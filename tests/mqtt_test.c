@@ -7,109 +7,66 @@
 #include "../include/app_state.h"
 #include "../include/mqtt_client_helper.h"
 
-
-#define MAX_COUNTRIES 11
-#define PADDING_X   5
-#define PADDING_Y   5
-#define WRAP_INDEX(idx, delta, max) \
-    ((((idx) + (delta)) % (max) + (max)) % (max))
-
+#define CLIENTID        "RadioReporter"
+#define TOPIC_STATUS    "radio/status"
+#define TOPIC_REQUEST   "radio/request"
 #define BACKGROUND_COLOR    BLACK
 #define TEXT_COLOR          CYAN
 #define SELECTED_TEXT_COLOR RED
+
 #define MAX_STATIONS   21
 #define STATION_OFFSET  0
 #define MAX_VISIBLE_STATION_COUNT 13
 
-#define CLIENTID        "RadioReporter"
-#define TOPIC_STATUS    "radio/status"
-#define TOPIC_REQUEST   "radio/request"
-
-typedef void (*draw_func_t)(void);
-
-int wiringPiInitialized = -1;
-MQTTClient client = NULL;
-AppState app_state = {0, 0, ZERO};
-
+#define WRAP_INDEX(idx, delta, max) \
+    ((((idx) + (delta)) % (max) + (max)) % (max))
 typedef struct {
     Station station;
     char country[15];
 } Message;
-
+AppState app_state = {0, 0, ZERO};
+Station stations[20];
+int wiringPiInitialized = -1;
+MQTTClient client = NULL;
 char mqtt_json_msg[512];
 Message mqtt_msg = { {"name", "url"}, "ML" };
 
-const char *countries[MAX_COUNTRIES] = {
+typedef void (*draw_func_t)(void);
+const char *countries[10] = {
         "Turn Off", "Georgia", "Netherlands", "Germany", "Russia", "Italy",
-        "Spain", "Australia", "Japan", "Canada", "China"
+        "Spain", "Australia", "Japan", "Canada"
     };
-Station stations[MAX_STATIONS];
+
+
 
 void on_radio_request(const char *topic, const char *payload) {
     printf("Got message on %s: %s\n", topic, payload);
 }
 
+
 void get_json_str(Message msg, char *json) {
-    snprintf(json, 512,
+    sprintf(json,
         "{ \"station\": { \"name\": \"%s\", \"url\": \"%s\" }, \"country\": \"%s\" }",
         msg.station.name, msg.station.url, msg.country);
-
 }
-
+void draw_countries() {
+    draw_text(5, 5, "Select a country:", WHITE, 0);
+    for(int i = 0; i < 10; i++) {
+        int is_selected = i == app_state.selected_country;
+        int y_location = 20 + i * LINE_HEIGHT;
+        if(is_selected) {
+            draw_rectangle(5, y_location, LCD_WIDTH, LINE_HEIGHT, BACKGROUND_COLOR);
+        }
+        char buffer[200];
+        sprintf(buffer, "%d: %s", i, countries[i]);
+        draw_text(5, y_location,
+            buffer, is_selected ? SELECTED_TEXT_COLOR : TEXT_COLOR, 0);
+    }
+}
 void send_mqtt_msg_wrapper() {
     get_json_str(mqtt_msg, mqtt_json_msg);
     send_msg(client, mqtt_json_msg, TOPIC_STATUS);
 }
-
-void handle_signal(int sig) {
-    printf("Received signal %d, cleaning up...\n", sig);
-    set_background(BLACK);
-    stop_station(1);
-    disconnect_client(client);
-    exit(0);
-}
-
-void draw_countries() {
-    draw_text(PADDING_X, 5, "Select a country:", WHITE, 0);
-    for(int i = 0; i < MAX_COUNTRIES; i++) {
-        int is_selected = i == app_state.selected_country;
-        int y_location = 20 + i * LINE_HEIGHT;
-        if(is_selected) {
-            draw_rectangle(PADDING_X, y_location, LCD_WIDTH, LINE_HEIGHT, BACKGROUND_COLOR);
-        }
-        char buffer[200];
-        sprintf(buffer, "%d: %s", i, countries[i]);
-        draw_text(PADDING_X, y_location,
-            buffer, is_selected ? SELECTED_TEXT_COLOR : TEXT_COLOR, 0);
-    }
-}
-int last_selected_station = 0;
-
-void draw_stations() {
-    int start_station = app_state.selected_station - MAX_VISIBLE_STATION_COUNT;
-    start_station = start_station < 0 ? 0 : start_station;
-    if(app_state.selected_station > MAX_VISIBLE_STATION_COUNT || last_selected_station > MAX_VISIBLE_STATION_COUNT) {
-        set_background(BACKGROUND_COLOR);
-    }
-    draw_text(PADDING_X, 5, countries[app_state.selected_country], WHITE, 0);
-    for(int i = 0; i < MAX_STATIONS; i++) {
-        int is_selected = i+start_station == app_state.selected_station;
-        int y_location = 20 + i * LINE_HEIGHT;
-        if(is_selected) {
-            draw_rectangle(PADDING_X, y_location, LCD_WIDTH, LINE_HEIGHT, BACKGROUND_COLOR);
-        }
-
-        if(i+start_station >= MAX_STATIONS) break;
-        char buffer[200];
-        sprintf(buffer, "%d: %s", i+start_station, stations[i+start_station].name);
-        draw_text(PADDING_X, y_location,
-            buffer, is_selected ? SELECTED_TEXT_COLOR : TEXT_COLOR, 0);
-        
-    }
-    last_selected_station = app_state.selected_station;
-}
-
-
 int encoder_selection_loop(int *selected_index, int max_items, draw_func_t draw_func, bool draw_bg) {
     if(draw_bg) set_background(BACKGROUND_COLOR);
     if (draw_func) { draw_func(); }
@@ -130,18 +87,34 @@ int encoder_selection_loop(int *selected_index, int max_items, draw_func_t draw_
 
     return 0;
 }
+int last_selected_station = 0;
+void draw_stations() {
+    int start_station = app_state.selected_station - MAX_VISIBLE_STATION_COUNT;
+    start_station = start_station < 0 ? 0 : start_station;
+    if(app_state.selected_station > MAX_VISIBLE_STATION_COUNT || last_selected_station > MAX_VISIBLE_STATION_COUNT) {
+        set_background(BACKGROUND_COLOR);
+    }
+    draw_text(5, 5, countries[app_state.selected_country], WHITE, 0);
+    for(int i = 0; i < MAX_STATIONS; i++) {
+        int is_selected = i+start_station == app_state.selected_station;
+        int y_location = 20 + i * LINE_HEIGHT;
+        if(is_selected) {
+            draw_rectangle(5, y_location, LCD_WIDTH, LINE_HEIGHT, BACKGROUND_COLOR);
+        }
 
-int country_selection() {
-    int res = encoder_selection_loop(&app_state.selected_country, MAX_COUNTRIES, draw_countries, true);
-    sprintf(mqtt_msg.country, countries[app_state.selected_country]);
-
-    send_mqtt_msg_wrapper();
-    return res;
+        if(i+start_station >= MAX_STATIONS) break;
+        char buffer[200];
+        sprintf(buffer, "%d: %s", i+start_station, stations[i+start_station].name);
+        draw_text(5, y_location,
+            buffer, is_selected ? SELECTED_TEXT_COLOR : TEXT_COLOR, 0);
+        
+    }
+    last_selected_station = app_state.selected_station;
 }
-
 int station_selection() {
     set_background(BACKGROUND_COLOR);
-    int size = get_stations_by_country(countries[app_state.selected_country], MAX_STATIONS-1, STATION_OFFSET, stations+1);
+    int size = get_stations_by_country(countries[app_state.selected_country], MAX_STATIONS, STATION_OFFSET, stations+1);
+    printf("size: %d\n", size);
     if(size > 0) {
         draw_stations();
     }
@@ -153,33 +126,16 @@ int station_selection() {
     
     return res;
 }
+int country_selection() {
+    int res = encoder_selection_loop(&app_state.selected_country, 10, draw_countries, true);
+    sprintf(mqtt_msg.country, countries[app_state.selected_country]);
 
-bool draw_station_info = true;
-
-int stream_playing_control() {
-    if(draw_station_info) {
-        set_background(BACKGROUND_COLOR);
-        char buffer[200];
-        sprintf(buffer, "Now playing: %s... ", stations[app_state.selected_station].name);
-        draw_text(PADDING_X, PADDING_Y, buffer, TEXT_COLOR, 1);
-        draw_text(PADDING_X, PADDING_Y+60, "Press the button to go back.", TEXT_COLOR, 1);
-        draw_station_info = false;
-    }
-    
-    return encoder_selection_loop(NULL, 0, NULL, false);
+    send_mqtt_msg_wrapper();
+    return res;
 }
-
 int main() {
-    
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
-    signal(SIGHUP, handle_signal);
-
     client = initialize_mqtt_client(on_radio_request, TOPIC_REQUEST, CLIENTID);
-    if (!client) {
-        printf("failed to init mqtt client\n");
-        return -1;
-    }
+    if (!client) return 1;
 
     lcd_ptr_t lcd_settings = lcd_init();
     int encoder_init_status = encoder_init();
@@ -188,7 +144,6 @@ int main() {
         printf("Initialization failed\n");
         return -1;
     }
-    
     app_state.state = INIT;
 
     stations[0] = (Station){"Back", ""};
@@ -199,11 +154,9 @@ int main() {
     int running = 1;
 
     while(running) {
-            
         switch (app_state.state)
         {
             case INIT:
-                printf("ha?\n");
                 app_state.state = COUNTRY_SELECTION;
                 break;
             case COUNTRY_SELECTION:
@@ -234,12 +187,7 @@ int main() {
                     }
                 }
                 break;
-            case STREAM_PLAYING:
-                if(stream_playing_control()) {
-                    app_state.state = STATION_SELECTION;
-                    draw_station_info = true;
-                }
-                break;
+
             default:
                 app_state.state = INIT;
                 break;
@@ -247,5 +195,6 @@ int main() {
     }
     lcd_cleanup(lcd_settings);
     
-    return 0;
+
+    disconnect_client(client);
 }
