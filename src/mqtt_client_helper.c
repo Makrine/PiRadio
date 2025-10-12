@@ -49,9 +49,9 @@ bool send_msg(MQTTClient client, char* msg, const char *topic_status) {
 
     MQTTClient_deliveryToken token;
     MQTTClient_publishMessage(client, topic_status, &pubmsg, &token);
-    printf("Publishing message: %s\n", msg);
+    printf("[MQTT sender] Publishing message: %s\n", msg);
     MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    printf("Message delivered\n");
+    printf("[MQTT sender] Message delivered\n");
 
     return true;
 

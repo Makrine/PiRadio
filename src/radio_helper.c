@@ -11,6 +11,10 @@
 
 pid_t vlc_pid = -1;
 
+int is_playing() {
+    return vlc_pid > 0;
+}
+
 char* get_curl_output(const char* cmd) {
     FILE *fp = popen(cmd, "r");
     if (!fp) return NULL;
@@ -71,6 +75,7 @@ int get_stations_by_country(const char *country, const int limit, const int offs
 }
 
 void play_station(const char *url) {
+    printf("vlc: %d\n", vlc_pid);
     if(vlc_pid > 0) {
         kill(vlc_pid, SIGKILL);  // stop previous VLC
     }

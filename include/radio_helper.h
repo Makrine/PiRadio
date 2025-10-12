@@ -6,6 +6,7 @@ typedef struct {
     char url[200];
 } Station;
 
+int is_playing();
 char* get_curl_output(const char* cmd);
 int get_stations_by_country(const char *country, const int limit, const int offset, Station *stations);
 void play_station(const char *url);
