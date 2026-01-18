@@ -21,7 +21,7 @@ MQTTClient initialize_mqtt_client(message_handler_t handler, const char *topic_r
 
     user_handler = handler;
 
-    MQTTClient_create(&client, ADDRESS, clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    MQTTClient_create(&client, SLAVE_ADDRESS, clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
     conn_opts.keepAliveInterval = 20;
     conn_opts.cleansession = 1;
 

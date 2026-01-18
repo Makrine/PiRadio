@@ -1,3 +1,5 @@
+# object files, libraries, executables, and debug files
+/main
 # Prerequisites
 *.d
 

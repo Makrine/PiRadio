@@ -41,7 +41,7 @@ typedef struct {
 
 
 char mqtt_json_msg[512];
-Message mqtt_msg = { {"name", "url"}, "ML" };
+Message mqtt_msg = { {"", ""}, "" };
 pthread_mutex_t state_mutex = PTHREAD_MUTEX_INITIALIZER;
 const char *countries[MAX_COUNTRIES] = {
         "Turn Off", "Georgia", "Netherlands", "Germany", "Russia", "Italy",
